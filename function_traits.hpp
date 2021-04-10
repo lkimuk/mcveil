@@ -6,6 +6,16 @@
 #include <type_traits>
 
 
+// the second method
+// user-defined placeholder type
+template<int N>
+struct MyPlaceholder {};
+
+namespace std {
+	template<int N>
+	struct is_placeholder<::MyPlaceholder<N>> : std::integral_constant<int, N> {};
+}
+
 namespace mc
 {
 
@@ -24,6 +34,8 @@ struct function_traits<std::function<R(Args...)>>
 	};
 };
 
+// the first method
+// use std::tuple to yiled a placeholder
 using PlaceholdersList = std::tuple<decltype(std::placeholders::_1),
 									decltype(std::placeholders::_2),
 									decltype(std::placeholders::_3),
@@ -45,11 +57,16 @@ using PlaceholdersList = std::tuple<decltype(std::placeholders::_1),
 									decltype(std::placeholders::_19),
 									decltype(std::placeholders::_20)>;
 
+
 template<std::size_t... Is, typename F, typename... Args>
 auto bind_helper(std::index_sequence<Is...>, const F& f, Args&&... args)
 {
-	return std::bind(f, std::forward<Args>(args)..., 
-		typename std::tuple_element<Is, PlaceholdersList>::type{}...);
+	// use method 1
+	/*return std::bind(f, std::forward<Args>(args)..., 
+		typename std::tuple_element<Is, PlaceholdersList>::type{}...);*/
+
+	// use method 2
+	return std::bind(f, std::forward<Args>(args)..., MyPlaceholder<Is + 1>{}...);
 }
 
 
